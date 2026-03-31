@@ -193,6 +193,190 @@ Before building, output this summary:
 
 Then proceed to build with these decisions locked in.
 
+## TECHNOLOGY SELECTION RULES
+
+### Library Selection Criteria (EVERY dependency must pass ALL):
+1. **Last updated:** < 6 months ago (no abandoned packages)
+2. **Weekly downloads:** > 50K on npm (proven adoption)
+3. **GitHub stars:** > 1K (community trust)
+4. **Open issues ratio:** < 20% of total issues (maintained)
+5. **TypeScript support:** native or @types available (no untyped deps)
+6. **Bundle size:** check on bundlephobia.com — smallest option wins
+7. **Security:** zero known vulnerabilities (check npm audit)
+8. **License:** MIT, Apache 2.0, or BSD (no GPL in commercial projects)
+
+### Recommended Stack (2026 verified, battle-tested):
+
+| Purpose | Library | Why this one |
+|---------|---------|-------------|
+| UI Framework | React 18+ | Industry standard, massive ecosystem |
+| Build | Vite 5+ | Fastest dev server, ESM-native |
+| SSR (if needed) | Next.js 15+ | Best React SSR, Vercel ecosystem |
+| State (simple) | Zustand 5+ | 1KB, no boilerplate, TypeScript-first |
+| State (server) | TanStack Query v5+ | Caching, refetch, optimistic updates |
+| Forms | React Hook Form + Zod | Performant, validation-first |
+| Animation | Framer Motion 12+ | React-native, gesture support, tree-shakeable |
+| HTTP Client | Axios 1.7+ or ky | Interceptors, retry, timeout built-in |
+| Routing | React Router 7+ | Standard, nested routes, loaders |
+| Icons | Lucide React | Lightweight, tree-shakeable, consistent |
+| Dates | date-fns 4+ | Tree-shakeable (NOT moment.js — bloated + deprecated) |
+| Tables | TanStack Table v8+ | Headless, sortable, filterable, virtual scroll |
+| DnD | dnd-kit | Accessible, performant, no legacy deps |
+| Charts | Recharts or Visx | React-native, responsive, composable |
+| Toast | Sonner | Tiny, beautiful, accessible |
+| Backend | Express 4.18+ or Fastify 5+ | Express = familiar, Fastify = faster |
+| ORM | TypeORM 0.3+ or Drizzle | TypeORM = mature, Drizzle = lighter + faster |
+| Validation | Zod 3.22+ | Shared client+server schemas, TypeScript inference |
+| Auth tokens | jose 5+ | Modern JWT, Edge-compatible (NOT jsonwebtoken for edge) |
+| Hashing | bcryptjs 2.4+ or Argon2 | Argon2 = stronger but needs native bindings |
+| Rate limit | express-rate-limit 7+ | Simple, Redis-backed for distributed |
+| Logging | Pino 9+ | Fastest Node.js logger, JSON structured |
+| Testing | Vitest 2+ + Playwright 1.40+ | Fast unit + full E2E + API in one |
+| Email | Nodemailer + React Email | Beautiful transactional emails |
+| File upload | Multer + Sharp | Upload + image processing |
+| PDF | @react-pdf/renderer | React components → PDF |
+
+### BANNED Libraries (do NOT use):
+| Library | Why banned |
+|---------|-----------|
+| moment.js | Bloated (300KB+), deprecated, use date-fns |
+| lodash (full) | Import entire library = bloat, use lodash-es or native |
+| jQuery | It's 2026. No. |
+| request | Deprecated since 2020 |
+| body-parser | Built into Express 4.16+ |
+| passport.js | Overcomplicated for most apps, build auth directly |
+| sequelize | TypeORM or Drizzle are better TypeScript citizens |
+| create-react-app | Dead. Use Vite. |
+
+## ERROR HANDLING & RESILIENCE (Zero Tolerance for Silent Failures)
+
+### API Call Resilience
+```typescript
+// Every API call must handle:
+try {
+  const data = await api.get('/resource');
+  // success path
+} catch (error) {
+  if (error.response) {
+    // Server responded with error (4xx, 5xx)
+    // → Show user-friendly message via toast
+    // → Log full error details (dev only)
+  } else if (error.request) {
+    // Request made but no response (network error)
+    // → Show "Connection failed, retrying..." 
+    // → Auto-retry with exponential backoff (3 attempts)
+  } else {
+    // Request setup error
+    // → Log and show generic error
+  }
+}
+```
+
+### Retry Strategy
+- Auto-retry on: network errors, 408, 429, 500, 502, 503, 504
+- Max retries: 3
+- Backoff: exponential (1s, 2s, 4s)
+- Never retry on: 400, 401, 403, 404, 409, 422 (client errors = don't retry)
+
+### Circuit Breaker Pattern
+- If an endpoint fails 5 times in 60 seconds → stop calling it for 30 seconds
+- Show degraded UI ("This feature is temporarily unavailable")
+- Auto-recover after cooldown
+
+### Global Error Boundary (Frontend)
+```typescript
+// Wrap entire app — catches any unhandled React error
+<ErrorBoundary fallback={<CrashPage />}>
+  <App />
+</ErrorBoundary>
+```
+- Catches render errors, shows friendly crash page
+- Logs error to monitoring service
+- Offers "Reload" button
+
+### Unhandled Rejection Handler (Backend)
+```typescript
+process.on('unhandledRejection', (reason) => {
+  logger.fatal({ err: reason }, 'Unhandled rejection');
+  // Don't crash — log and continue (unless critical)
+});
+
+process.on('uncaughtException', (err) => {
+  logger.fatal({ err }, 'Uncaught exception — shutting down');
+  process.exit(1); // This one must crash — state is corrupted
+});
+```
+
+## LOGGING (Developer Sees Everything, User Sees Nothing)
+
+### Logging Architecture
+```
+Development (NODE_ENV=development):
+  ├── Console: colored, human-readable, verbose
+  ├── Every request logged: method, URL, status, duration
+  ├── Every DB query logged: SQL, params, duration
+  ├── Every error: full stack trace + request context
+  └── Auth events: login, logout, token refresh, failures
+
+Production (NODE_ENV=production):
+  ├── Console: JSON structured (for log aggregators)
+  ├── Requests: method, URL, status, duration, userId (NO body/params)
+  ├── DB queries: NOT logged (security + performance)
+  ├── Errors: message + stack + requestId (NO user data in logs)
+  └── Auth events: success/failure + userId (NO passwords/tokens)
+```
+
+### Logger Setup (Pino)
+```typescript
+import pino from 'pino';
+
+const logger = pino({
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  transport: process.env.NODE_ENV !== 'production' 
+    ? { target: 'pino-pretty', options: { colorize: true } }
+    : undefined,
+  redact: {
+    paths: ['req.headers.authorization', 'req.body.password', 'req.body.refreshToken'],
+    censor: '[REDACTED]'
+  }
+});
+```
+
+### What to Log vs What to NEVER Log
+
+| ✅ ALWAYS LOG | ❌ NEVER LOG |
+|--------------|-------------|
+| Request method + URL | Passwords (even hashed) |
+| Response status + duration | JWT tokens |
+| User ID (for audit trail) | Credit card numbers |
+| Error messages + stack traces | API keys / secrets |
+| Auth events (login/logout) | Full request bodies in production |
+| Rate limit triggers | Personal data (email in error logs) |
+| DB connection failures | Session tokens |
+| Startup/shutdown events | Query parameters with sensitive data |
+
+### Request Correlation
+- Generate unique `requestId` (UUID) for every incoming request
+- Attach to ALL logs within that request lifecycle
+- Return in response header: `X-Request-ID`
+- Client can reference in bug reports: "Error on request abc-123"
+
+### Log Levels
+```
+fatal → App is dying (uncaught exception, DB permanently down)
+error → Something failed but app continues (API error, validation)
+warn  → Something suspicious (rate limit hit, deprecated endpoint used)
+info  → Normal operations (request served, user logged in)
+debug → Developer details (query results, cache hits) — DEV ONLY
+trace → Extremely verbose (every function entry/exit) — NEVER in prod
+```
+
+### Frontend Logging
+- Development: console.log/warn/error visible in browser
+- Production: ZERO console.* statements (strip via build plugin)
+- Errors caught by ErrorBoundary → send to monitoring (Sentry/LogRocket)
+- User actions logged to analytics (not console)
+
 ## PHASE 3: BUILD
 
 ## PROJECT DETAILS
