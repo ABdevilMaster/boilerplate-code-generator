@@ -27,7 +27,7 @@ You are a senior full-stack developer building a production-ready web applicatio
 - Security: Helmet, CORS, Rate Limiting, XSS protection, CSRF tokens
 - DevOps: Docker + Docker Compose + multi-stage builds
 - Styling: CSS Variables (theme.config.ts driven)
-- Testing: Vitest (unit) + Playwright (E2E) — optional but structured for it
+- Testing: Vitest (unit) + Playwright (E2E + API) — MANDATORY, not optional
 
 ## BASE TEMPLATE
 Use this project structure as foundation:
@@ -239,6 +239,170 @@ src/contexts/
 - Error state → retry button + toast
 - Empty state → illustration + helpful message
 - Optimistic updates for better UX (toggle, delete)
+
+## TESTING (Non-negotiable — Ship Nothing Untested)
+
+### Test Structure
+```
+tests/
+├── unit/                          ← Vitest
+│   ├── server/
+│   │   ├── auth.service.test.ts   ← Auth logic (hash, token, refresh)
+│   │   ├── validators.test.ts     ← Zod schema validation
+│   │   └── middleware.test.ts     ← Auth guard, error handler
+│   └── client/
+│       ├── useAuth.test.tsx       ← Auth hook behavior
+│       └── components.test.tsx    ← Component rendering
+│
+├── api/                           ← Playwright API testing
+│   ├── auth.api.test.ts           ← Register, login, refresh, logout flow
+│   ├── [resource].api.test.ts     ← CRUD operations
+│   ├── security.api.test.ts       ← Rate limiting, invalid tokens, CSRF
+│   └── edge-cases.api.test.ts     ← Empty inputs, SQL injection attempts, XSS payloads
+│
+├── e2e/                           ← Playwright E2E (browser)
+│   ├── auth.e2e.test.ts           ← Register → login → dashboard → logout (full flow)
+│   ├── [feature].e2e.test.ts      ← Feature-specific user journeys
+│   ├── responsive.e2e.test.ts     ← Mobile (375px), tablet (768px), desktop (1280px)
+│   └── accessibility.e2e.test.ts  ← Tab navigation, screen reader, contrast
+│
+└── fixtures/
+    ├── users.json                 ← Test users (admin, regular, inactive)
+    └── [resource].json            ← Test data for each model
+```
+
+### Playwright API Tests (MANDATORY for every endpoint)
+```typescript
+// Example: Auth API test
+test.describe('Auth API', () => {
+  test('POST /api/auth/register — creates user + returns tokens', async ({ request }) => {
+    const res = await request.post('/api/auth/register', {
+      data: { email: 'test@test.com', password: 'Test1234!', name: 'Test User' }
+    });
+    expect(res.ok()).toBeTruthy();
+    const body = await res.json();
+    expect(body.accessToken).toBeDefined();
+    expect(body.refreshToken).toBeDefined();
+    expect(body.user.email).toBe('test@test.com');
+    expect(body.user.password).toBeUndefined(); // Never leak password
+  });
+
+  test('POST /api/auth/login — rejects wrong password', async ({ request }) => {
+    const res = await request.post('/api/auth/login', {
+      data: { email: 'test@test.com', password: 'WrongPass!' }
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  test('GET /api/users/me — rejects without token', async ({ request }) => {
+    const res = await request.get('/api/users/me');
+    expect(res.status()).toBe(401);
+  });
+
+  test('GET /api/users — rejects non-admin', async ({ request }) => {
+    // Login as regular user, try admin endpoint
+    const login = await request.post('/api/auth/login', {
+      data: { email: 'regular@test.com', password: 'Test1234!' }
+    });
+    const { accessToken } = await login.json();
+    const res = await request.get('/api/users', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    expect(res.status()).toBe(403);
+  });
+});
+```
+
+### Playwright E2E Tests (MANDATORY for every user journey)
+```typescript
+// Example: Full auth flow
+test.describe('Auth Flow', () => {
+  test('user can register → see dashboard → logout', async ({ page }) => {
+    await page.goto('/register');
+    await page.fill('input[type="text"]', 'New User');
+    await page.fill('input[type="email"]', 'new@test.com');
+    await page.fill('input[type="password"]', 'Test1234!');
+    await page.click('button[type="submit"]');
+    
+    // Should redirect to dashboard
+    await expect(page).toHaveURL('/dashboard');
+    await expect(page.locator('h2')).toContainText('Welcome, New User');
+    
+    // Logout
+    await page.click('.btn-logout');
+    await expect(page).toHaveURL('/login');
+  });
+});
+```
+
+### Security Tests (MANDATORY)
+Every app must include these Playwright API tests:
+- [ ] SQL injection payloads in all input fields → should be rejected
+- [ ] XSS payloads (`<script>alert(1)</script>`) in all text fields → should be sanitized
+- [ ] Expired token → returns 401 (not 500)
+- [ ] Malformed token → returns 401
+- [ ] Rate limit exceeded → returns 429
+- [ ] Oversized payload (>10MB) → returns 413
+- [ ] Missing required fields → returns 400 with field-level errors
+- [ ] Duplicate email registration → returns 409
+- [ ] Invalid email format → returns 400
+- [ ] Password too short → returns 400
+- [ ] Access admin route as user → returns 403
+- [ ] Access protected route without auth → returns 401
+
+### Test Commands
+```bash
+# Unit tests
+npm run test:unit          # Vitest
+
+# API tests (requires server running)
+npm run test:api           # Playwright API
+
+# E2E tests (requires full stack running)
+npm run test:e2e           # Playwright browser
+
+# All tests
+npm run test               # Run all
+
+# CI pipeline
+npm run test:ci            # Headless, with coverage report
+```
+
+### Test Quality Rules
+1. Every API endpoint must have ≥ 3 tests: happy path, validation error, auth error
+2. Every user-facing page must have an E2E test
+3. Security tests are NON-NEGOTIABLE — ship nothing without them
+4. Test data uses fixtures — no hardcoded values scattered in tests
+5. Tests must be independent — no test depends on another test's state
+6. Database resets between test suites (use transactions or truncate)
+7. CI must pass all tests before merge (GitHub Actions workflow included)
+8. Coverage target: ≥ 80% lines for server, ≥ 70% for client
+
+### CI/CD Pipeline (GitHub Actions)
+```yaml
+# .github/workflows/test.yml
+name: Test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run test:unit
+      - run: npm run test:api
+      - run: npx playwright install --with-deps
+      - run: npm run test:e2e
+```
 
 ## SEO & META
 - React Helmet for dynamic page titles
