@@ -1167,6 +1167,121 @@ User uploads → S3 bucket (private)
 - desktop: > 1024px
 - All components mobile-first
 
+### Mobile-App Ready (PWA → Installable App)
+
+The web app MUST be usable as a mobile app. This means:
+
+**PWA Installation:**
+- `manifest.json` configured (name, icons, theme_color, start_url, display: standalone)
+- Service worker registered with offline fallback
+- "Add to Home Screen" prompt on mobile browsers
+- When installed: runs fullscreen, no browser bar, feels native
+
+**Mobile-First UI Rules:**
+1. Touch targets: minimum 44x44px (Apple HIG) — buttons, links, inputs
+2. No hover-only interactions — everything must work with tap
+3. Bottom navigation bar on mobile (thumb-friendly zone) — top navbar on desktop
+4. Swipe gestures: swipe to delete (lists), swipe between tabs (react-swipeable)
+5. Pull-to-refresh on list pages
+6. Safe area insets: respect notch/dynamic island (env(safe-area-inset-*))
+7. Viewport meta: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`
+8. No tiny text: minimum 16px body text on mobile (prevents iOS zoom on input focus)
+9. Sheet modals on mobile (slide up from bottom) — centered modals on desktop
+10. Sticky headers and floating action buttons
+
+**Native-Like Features:**
+- Haptic feedback on button press (navigator.vibrate for Android)
+- Camera access for file upload (accept="image/*;capture=camera")
+- Geolocation API for location-based features
+- Push notifications via Web Push API (Firebase Cloud Messaging)
+- Share API: `navigator.share()` for native share sheets
+- Splash screen: configured in manifest.json
+
+**Capacitor Bridge (Optional — True Native App)**
+If client wants App Store / Play Store listing:
+```
+Web app (React)
+    ↓ wrap with
+Capacitor (by Ionic)
+    ↓ builds
+├── iOS app (.ipa)  → App Store
+└── Android app (.apk) → Play Store
+```
+- Same codebase, no rewrite
+- Access native APIs: camera, push, biometrics, file system
+- Add `@capacitor/core` + platform plugins as needed
+- Build: `npx cap add android && npx cap open android`
+
+**Architecture Decision:**
+```
+Client needs mobile app?
+├── Budget app → PWA only (installable, offline, push notifications)
+├── Need App Store presence → Capacitor wrapper (same React code)
+└── Need heavy native features → React Native (separate project)
+```
+
+### Modular Architecture Rules
+
+Every feature must be self-contained and removable without breaking the app:
+
+**Module Structure:**
+```
+src/modules/[feature]/
+├── components/          ← UI components for this feature only
+├── hooks/               ← Feature-specific hooks
+├── services/            ← API calls for this feature
+├── types/               ← TypeScript types/interfaces
+├── schemas/             ← Zod validation schemas
+├── utils/               ← Feature-specific helpers
+├── [Feature].routes.tsx ← Route definitions (lazy loaded)
+└── index.ts             ← Public API — only export what other modules need
+```
+
+**Module Rules:**
+1. Modules NEVER import directly from another module's internals
+2. Cross-module communication via: shared context, events, or shared/ folder
+3. Every module has its own route file — lazy loaded via React.lazy
+4. Removing a module = delete folder + remove route import — app still works
+5. Shared UI components (Button, Input, Modal) live in `shared/ui/` — not in modules
+6. Module-specific API calls stay inside the module — not in a global api file
+7. Feature flags: wrap entire modules in `{features.MODULE_NAME && <Module />}`
+
+**Plugin System (for optional features):**
+```typescript
+// src/plugins/index.ts
+export const plugins = {
+  payments: () => import('../modules/payments'),
+  analytics: () => import('../modules/analytics'),
+  chat: () => import('../modules/chat'),
+  notifications: () => import('../modules/notifications'),
+};
+
+// Only loaded when needed — zero bundle cost if disabled
+```
+
+**Server-Side Modularity:**
+```
+server/src/modules/[resource]/
+├── [resource].entity.ts      ← TypeORM model
+├── [resource].service.ts     ← Business logic
+├── [resource].routes.ts      ← Express routes
+├── [resource].schemas.ts     ← Zod validation
+├── [resource].test.ts        ← Unit tests
+└── index.ts                  ← registerRoutes(app) function
+```
+
+Register modules in server entry:
+```typescript
+// server/src/index.ts
+import { registerAuthRoutes } from './modules/auth';
+import { registerUserRoutes } from './modules/users';
+import { registerPaymentRoutes } from './modules/payments';
+
+registerAuthRoutes(app);
+registerUserRoutes(app);
+registerPaymentRoutes(app);  // Comment out = feature disabled
+```
+
 ### Components Checklist
 Every app must include these base components:
 - [ ] Button (primary, secondary, danger, ghost, loading state, disabled)
