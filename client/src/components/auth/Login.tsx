@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { themeConfig } from '../../styles/theme.config';
 
 export default function Login() {
   const { login } = useAuth();
@@ -25,8 +26,8 @@ export default function Login() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>🦅 Welcome Back</h1>
-        <p className="subtitle">Sign in to your account</p>
+        <h1>{themeConfig.company.logo} Welcome Back</h1>
+        <p className="subtitle">Sign in to {themeConfig.company.name}</p>
         {error && <div className="error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />

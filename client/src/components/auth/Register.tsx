@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { themeConfig } from '../../styles/theme.config';
 
 export default function Register() {
   const { register } = useAuth();
@@ -26,8 +27,8 @@ export default function Register() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>🦅 Create Account</h1>
-        <p className="subtitle">Start building something great</p>
+        <h1>{themeConfig.company.logo} Create Account</h1>
+        <p className="subtitle">{themeConfig.company.tagline}</p>
         {error && <div className="error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)} required />
