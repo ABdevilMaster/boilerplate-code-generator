@@ -615,7 +615,7 @@ clean:        rm -rf node_modules dist coverage .cache
 - **Brand Color:** [HEX_COLOR e.g. #14b8a6]
 - **Logo:** [EMOJI or URL]
 
-## TECH STACK (Non-negotiable)
+## TECH STACK (Defaults — Architecture Engine can override)
 - Frontend: React 18 + Vite + TypeScript
 - State Management: React Context + useReducer (or Zustand for complex apps)
 - Backend: Node.js + Express + TypeScript
@@ -742,6 +742,390 @@ Use this project structure as foundation:
 - Drag and drop (dnd-kit) for sortable lists
 - Inline editing (click to edit, auto-save)
 - Skeleton → content transition (no layout shift)
+
+## INTERNATIONALIZATION (i18n)
+
+### Setup: react-i18next
+```
+client/src/
+├── i18n/
+│   ├── index.ts              ← i18n init config
+│   ├── locales/
+│   │   ├── en/
+│   │   │   ├── common.json   ← Shared: buttons, labels, errors
+│   │   │   └── [feature].json
+│   │   ├── hi/               ← Hindi
+│   │   │   ├── common.json
+│   │   │   └── [feature].json
+│   │   └── te/               ← Telugu
+│   └── useTranslation.ts     ← Typed hook wrapper
+```
+
+### Rules
+- All user-facing strings via `t('key')` — ZERO hardcoded text in JSX
+- Language detection: browser → localStorage → fallback to 'en'
+- Language switcher in navbar (globe icon)
+- RTL support ready (for Arabic/Urdu expansion)
+- Date/currency formatting locale-aware (date-fns locale imports)
+- Backend error messages: return error codes, frontend translates
+
+## PWA (Progressive Web App)
+
+### manifest.json
+```json
+{
+  "name": "[APP_NAME]",
+  "short_name": "[SHORT_NAME]",
+  "description": "[DESCRIPTION]",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "[THEME_BG]",
+  "theme_color": "[THEME_PRIMARY]",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
+```
+
+### Service Worker
+- Cache static assets (JS, CSS, fonts, images) — cache-first strategy
+- API calls — network-first with cache fallback
+- Offline fallback page: `/offline.html` with branding + "You're offline" message
+- Background sync for failed POST/PUT requests (queue + retry when online)
+- Registration in main.tsx with update prompt ("New version available — refresh?")
+
+## PAYMENT HANDLING (Critical Flow — Zero Tolerance for Errors)
+
+### Razorpay (India) / Stripe (Global)
+```
+Payment Flow:
+1. Client creates order → POST /api/payments/create-order
+2. Server creates order on Razorpay/Stripe → returns orderId + amount
+3. Client opens payment modal (Razorpay checkout / Stripe Elements)
+4. User pays → payment gateway processes
+5. Gateway sends webhook → POST /api/payments/webhook (server verifies signature)
+6. Server verifies payment → updates order status → sends confirmation email
+7. Client polls /api/payments/status/:orderId OR receives WebSocket update
+```
+
+### Payment Security Rules
+- [ ] Webhook signature verification (HMAC SHA256) — NEVER trust client-side payment confirmation
+- [ ] Idempotency keys on all payment creation requests (prevent double charges)
+- [ ] Payment amount verified server-side (never trust client-sent amount)
+- [ ] Failed payment recovery: show retry button, log failure reason, alert admin
+- [ ] Refund flow: admin-initiated, logged, confirmation email to user
+- [ ] Payment status enum: CREATED → PENDING → PAID → FAILED → REFUNDED
+- [ ] Webhook retry handling (gateways retry on failure — handle duplicates via idempotency)
+- [ ] Store transaction log: every payment attempt logged with gateway response
+- [ ] PCI compliance: never store card details — gateway handles it
+- [ ] Test mode in development (Razorpay test key / Stripe test mode)
+
+## EMAIL TEMPLATES
+
+### Structure
+```
+server/src/emails/
+├── templates/
+│   ├── welcome.tsx            ← React Email component
+│   ├── password-reset.tsx
+│   ├── order-confirmation.tsx
+│   ├── invoice.tsx
+│   └── notification.tsx
+├── email.service.ts           ← Send via Nodemailer/SendGrid
+└── email.config.ts            ← SMTP settings from env
+```
+
+### Rules
+- All emails use React Email (react.email) — component-based, responsive
+- Brand colors from theme.config.ts applied to email templates
+- Plain text fallback for every HTML email
+- Unsubscribe link in marketing emails (CAN-SPAM compliance)
+- Rate limit outgoing emails (prevent spam if account compromised)
+- Queue emails via background job (don't block API response)
+
+## FILE & ASSET MANAGEMENT
+
+### Upload Pipeline
+```
+Client upload → Multer (memory storage) → Validate → Sharp (resize/compress) → S3/Local → DB URL
+```
+
+### Rules
+| File type | Max size | Allowed MIME types |
+|-----------|---------|-------------------|
+| Avatar | 2MB | image/jpeg, image/png, image/webp |
+| Document | 10MB | application/pdf, application/docx |
+| Image | 5MB | image/jpeg, image/png, image/webp, image/avif |
+| Video | 50MB | video/mp4, video/webm |
+
+### Storage Strategy
+- Development: local `uploads/` folder (gitignored)
+- Production: S3-compatible (AWS S3 / DigitalOcean Spaces / Cloudflare R2)
+- Private files: signed URLs with expiry (15 min default)
+- Public files: CDN URL (Cloudinary transform URLs for images)
+- Image pipeline: original → thumbnail (150px) + medium (600px) + large (1200px)
+- Virus scan path: ClamAV integration for uploaded documents (optional but recommended)
+
+## DATABASE MIGRATION STRATEGY
+
+### Naming Convention
+```
+YYYYMMDDHHMMSS-description.ts
+Example: 20260401043000-create-users-table.ts
+```
+
+### Rules
+1. NEVER use `synchronize: true` in production — migrations only
+2. Every migration has an `up()` AND `down()` (rollback)
+3. Test rollback before deploying: `npm run migrate:down` then `npm run migrate:up`
+4. Zero-downtime migrations: add columns as nullable first → backfill → make non-null
+5. Never rename/drop columns directly — create new, migrate data, drop old (3-step)
+6. Seed data is SEPARATE from migrations (seeds/ folder)
+7. Seeds are idempotent — running twice doesn't duplicate data
+
+### Commands
+```bash
+npm run migrate:generate -- -n description    # Auto-generate from entity changes
+npm run migrate:run                           # Apply pending migrations
+npm run migrate:down                          # Rollback last migration
+npm run migrate:status                        # Show pending/applied
+npm run seed                                  # Run seed data
+```
+
+## MONITORING & ALERTING
+
+### Error Tracking: Sentry
+```typescript
+// client/src/main.tsx
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  tracesSampleRate: 0.1, // 10% of transactions for performance
+  enabled: import.meta.env.PROD,
+});
+
+// server/src/index.ts
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+});
+```
+
+### Health Check Endpoint
+```typescript
+GET /api/health → {
+  status: 'ok' | 'degraded' | 'down',
+  timestamp: ISO,
+  uptime: seconds,
+  database: 'connected' | 'disconnected',
+  memory: { used, total },
+  version: '1.0.0'
+}
+```
+
+### Alerting Rules
+- 5xx error rate > 1% in 5 minutes → alert
+- Response time p95 > 2 seconds → warning
+- Database connection failures → critical alert
+- Disk usage > 80% → warning
+- Memory usage > 90% → critical
+- Unhandled rejections → alert per occurrence
+- Failed login attempts > 10/min from same IP → security alert
+
+### Uptime Monitoring
+- External: UptimeRobot / BetterStack (free tier) — ping /api/health every 60s
+- Internal: Docker healthcheck in docker-compose.yml
+
+## DEPLOYMENT STRATEGY
+
+### Environments
+```
+development → localhost (docker-compose.yml)
+staging     → staging.example.com (docker-compose.staging.yml)
+production  → app.example.com (docker-compose.prod.yml)
+```
+
+### Production Deployment
+```yaml
+# docker-compose.prod.yml overrides:
+services:
+  server:
+    restart: always
+    environment:
+      - NODE_ENV=production
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  
+  client:
+    restart: always
+  
+  db:
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # Persistent!
+```
+
+### SSL: Let's Encrypt + Nginx
+- Certbot auto-renewal via cron
+- Nginx reverse proxy: SSL termination → proxy to Docker containers
+- HSTS header: `max-age=31536000; includeSubDomains`
+
+### Rollback Procedure
+1. Keep last 3 Docker image versions tagged
+2. Rollback: `docker-compose pull && docker-compose up -d` with previous tag
+3. Database: run `migrate:down` if migration was part of release
+4. DNS: Cloudflare → instant switch if needed
+
+### Zero-Downtime Deploy
+- Rolling update: start new container → health check passes → stop old container
+- Database migrations BEFORE code deploy (backward-compatible changes only)
+
+## API DOCUMENTATION
+
+### Swagger / OpenAPI
+```typescript
+// server/src/config/swagger.ts
+import swaggerJsdoc from 'swagger-jsdoc';
+
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: '[APP_NAME] API',
+      version: '1.0.0',
+      description: 'API documentation',
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }
+      }
+    }
+  },
+  apis: ['./src/**/*.routes.ts'],
+};
+```
+
+- Auto-generated from route JSDoc comments
+- Available at `/api/docs` in development only (disabled in production)
+- Postman collection export: `npm run docs:postman`
+- API versioning: `/api/v1/` from day one
+- Deprecation: add `Sunset` header + `Deprecated` flag in docs 6 months before removal
+
+## WEBSOCKET RESILIENCE
+
+### Auto-Reconnect
+```typescript
+class ReliableSocket {
+  private retryCount = 0;
+  private maxRetries = 10;
+  private baseDelay = 1000; // 1s, 2s, 4s, 8s...
+
+  connect() {
+    this.ws = new WebSocket(url);
+    this.ws.onclose = () => this.reconnect();
+    this.ws.onopen = () => { this.retryCount = 0; this.flushQueue(); };
+  }
+
+  reconnect() {
+    if (this.retryCount >= this.maxRetries) return this.onFatalDisconnect();
+    const delay = this.baseDelay * Math.pow(2, this.retryCount);
+    setTimeout(() => { this.retryCount++; this.connect(); }, delay);
+  }
+
+  // Queue messages sent while disconnected
+  private messageQueue: any[] = [];
+  send(data: any) {
+    if (this.ws.readyState !== WebSocket.OPEN) {
+      this.messageQueue.push(data);
+      return;
+    }
+    this.ws.send(JSON.stringify(data));
+  }
+  
+  flushQueue() {
+    while (this.messageQueue.length > 0) {
+      this.send(this.messageQueue.shift());
+    }
+  }
+}
+```
+
+### Connection State UI
+- 🟢 Connected (hidden — default)
+- 🟡 Reconnecting... (subtle banner at top)
+- 🔴 Disconnected (persistent banner with retry button)
+- Heartbeat: ping/pong every 30s to detect zombie connections
+
+## GIT BRANCHING STRATEGY
+
+```
+main        ← production-ready, deploys automatically
+├── dev     ← integration branch, staging deploys from here
+│   ├── feature/auth-passkeys     ← feature branches
+│   ├── feature/dashboard-charts
+│   └── fix/login-race-condition  ← bug fix branches
+```
+
+### Rules
+- Feature branches from `dev`, PR into `dev`
+- `dev` → `main` via PR with: all tests pass + code review + QA sign-off
+- Hotfixes: branch from `main`, PR into both `main` AND `dev`
+- Commit format: `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`
+- Squash merge for features, merge commit for releases
+
+## RATE LIMITING (Granular)
+
+| Endpoint type | Authenticated | Unauthenticated |
+|--------------|--------------|-----------------|
+| Auth (login/register) | N/A | 5 req/min per IP |
+| Password reset | N/A | 3 req/hour per email |
+| API read (GET) | 200 req/min | 30 req/min per IP |
+| API write (POST/PUT/DELETE) | 50 req/min | 10 req/min per IP |
+| File upload | 10 req/hour | Blocked |
+| Webhook | 100 req/min (signed only) | Blocked |
+
+## DATA PRIVACY (GDPR / India DPDPA)
+
+### Rules
+- User data export: `GET /api/users/me/export` → JSON download of all user data
+- User data deletion: `DELETE /api/users/me` → soft delete first, hard delete after 30 days
+- Consent tracking: store consent timestamps for each data processing purpose
+- Cookie consent banner (for EU visitors)
+- Privacy policy page (template included)
+- Data retention policy: auto-delete inactive accounts after 2 years (configurable)
+- PII encryption at rest for: email, phone, address (AES-256)
+- Audit log: who accessed what PII and when
+- Right to rectification: users can edit all their personal data
+
+## ASSET CDN STRATEGY
+
+### Development
+- Local uploads/ folder
+- Images served directly via Express static middleware
+- No CDN (unnecessary for local dev)
+
+### Production
+```
+User uploads → S3 bucket (private)
+                ↓
+        Cloudflare R2 / CloudFront (CDN edge cache)
+                ↓
+        User browser (cached, fast)
+```
+
+- Image transforms: Cloudinary URL transforms (resize, format, quality on-the-fly)
+  - Example: `https://res.cloudinary.com/[cloud]/image/upload/w_600,f_auto,q_auto/[image]`
+- Fallback: if CDN unavailable → serve from S3 directly (slower but works)
+- Cache headers: `Cache-Control: public, max-age=31536000, immutable` for hashed assets
+- Cache busting: filename hashing via Vite build ([name].[hash].js)
 
 ## DESIGN SYSTEM & THEMING
 
