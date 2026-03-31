@@ -377,6 +377,235 @@ trace → Extremely verbose (every function entry/exit) — NEVER in prod
 - Errors caught by ErrorBoundary → send to monitoring (Sentry/LogRocket)
 - User actions logged to analytics (not console)
 
+## PROJECT SCAFFOLD (Generate This Structure FIRST Before Any Code)
+
+### Complete Project Tree
+```
+[project-name]/
+│
+├── 📄 README.md                      ← Client-facing: setup, features, API docs
+├── 📄 CHANGELOG.md                   ← Version history
+├── 📄 LICENSE                        ← MIT (or as agreed)
+├── 📄 .env.example                   ← ALL env vars documented (no real values)
+├── 📄 .gitignore                     ← Node, env, logs, build, OS files
+├── 📄 docker-compose.yml             ← One command: entire stack runs
+├── 📄 docker-compose.prod.yml        ← Production overrides (no volumes, no debug)
+├── 📄 Makefile                       ← Shortcuts: make dev, make test, make deploy
+│
+├── 🔒 .env                          ← ❌ NEVER IN REPO (gitignored)
+├── 🔒 .env.production               ← ❌ NEVER IN REPO
+├── 🔒 secrets/                       ← ❌ NEVER IN REPO
+│
+├── 📁 .github/
+│   ├── workflows/
+│   │   ├── test.yml                  ← CI: lint + unit + API + E2E on PR
+│   │   ├── deploy.yml                ← CD: build + push + deploy on merge
+│   │   └── security.yml              ← Weekly: npm audit + dependency check
+│   └── PULL_REQUEST_TEMPLATE.md      ← PR checklist
+│
+├── 📁 docs/                          ← 🔒 INTERNAL — not shared with client
+│   ├── architecture-decision.md      ← Why we chose this stack
+│   ├── api-spec.md                   ← Full API documentation
+│   ├── deployment-guide.md           ← How to deploy to production
+│   ├── database-schema.md            ← ER diagram + relations
+│   └── environment-vars.md           ← What each env var does
+│
+├── 📁 scripts/                       ← 🔒 INTERNAL dev tools
+│   ├── setup.sh                      ← First-time setup (theme, branding)
+│   ├── seed.ts                       ← Seed database with test data
+│   ├── migrate.ts                    ← Run migrations
+│   ├── reset-db.ts                   ← Nuclear option: wipe + reseed
+│   └── generate-types.ts             ← Auto-generate types from DB schema
+│
+├── 📁 client/
+│   ├── 📄 Dockerfile                 ← Multi-stage: build → nginx
+│   ├── 📄 nginx.conf                 ← SPA routing + API proxy
+│   ├── 📄 package.json
+│   ├── 📄 tsconfig.json
+│   ├── 📄 vite.config.ts
+│   ├── 📄 index.html
+│   ├── 📁 public/
+│   │   ├── favicon.ico
+│   │   ├── robots.txt
+│   │   ├── sitemap.xml               ← Auto-generated or static
+│   │   └── manifest.json             ← PWA manifest
+│   └── 📁 src/
+│       ├── 📄 main.tsx               ← Entry: theme inject + providers
+│       ├── 📄 App.tsx                ← Routes + guards
+│       ├── 📄 vite-env.d.ts          ← Vite type declarations
+│       │
+│       ├── 📁 styles/
+│       │   ├── theme.config.ts       ← 🎨 ONE FILE: all branding/colors/fonts
+│       │   ├── global.css            ← CSS reset + variables + base styles
+│       │   ├── animations.css        ← Keyframes: shimmer, fade, slide, shake
+│       │   └── utilities.css         ← Helpers: .flex-center, .truncate, .sr-only
+│       │
+│       ├── 📁 components/
+│       │   ├── 📁 ui/                ← Reusable design system components
+│       │   │   ├── Button.tsx         ← Primary, secondary, danger, ghost, loading
+│       │   │   ├── Input.tsx          ← Text, email, password + label + error
+│       │   │   ├── Select.tsx
+│       │   │   ├── Modal.tsx
+│       │   │   ├── Toast.tsx          ← (or use Sonner)
+│       │   │   ├── Card.tsx
+│       │   │   ├── Table.tsx          ← Sortable, paginated
+│       │   │   ├── Skeleton.tsx       ← Shimmer loading placeholder
+│       │   │   ├── Avatar.tsx         ← Image + fallback initials
+│       │   │   ├── Badge.tsx          ← Status, role, count
+│       │   │   ├── Breadcrumb.tsx
+│       │   │   ├── EmptyState.tsx     ← Illustration + message + CTA
+│       │   │   ├── ConfirmDialog.tsx  ← "Are you sure?" modal
+│       │   │   ├── Spinner.tsx
+│       │   │   └── index.ts          ← Barrel export: import { Button, Input } from '@/ui'
+│       │   │
+│       │   ├── 📁 layout/
+│       │   │   ├── Layout.tsx         ← Navbar + sidebar + main content
+│       │   │   ├── Navbar.tsx         ← Brand, user menu, notifications
+│       │   │   ├── Sidebar.tsx        ← Navigation links (collapsible)
+│       │   │   ├── Footer.tsx
+│       │   │   └── PageHeader.tsx     ← Title + breadcrumb + actions
+│       │   │
+│       │   ├── 📁 auth/
+│       │   │   ├── Login.tsx
+│       │   │   ├── Register.tsx
+│       │   │   ├── ForgotPassword.tsx
+│       │   │   └── ResetPassword.tsx
+│       │   │
+│       │   ├── 📁 dashboard/
+│       │   │   └── Dashboard.tsx      ← Stats cards, recent activity
+│       │   │
+│       │   ├── 📁 errors/
+│       │   │   ├── NotFound.tsx       ← 404 page
+│       │   │   ├── Forbidden.tsx      ← 403 page
+│       │   │   ├── CrashPage.tsx      ← ErrorBoundary fallback
+│       │   │   └── Maintenance.tsx    ← "We'll be back" page
+│       │   │
+│       │   └── 📁 [feature]/          ← One folder per feature/resource
+│       │       ├── [Feature]List.tsx
+│       │       ├── [Feature]Detail.tsx
+│       │       ├── [Feature]Form.tsx   ← Create + Edit (shared form)
+│       │       └── [Feature]Card.tsx
+│       │
+│       ├── 📁 hooks/
+│       │   ├── useAuth.tsx            ← Auth context + provider
+│       │   ├── useToast.tsx           ← Toast notifications
+│       │   ├── useDebounce.ts         ← Search input debounce
+│       │   ├── useMediaQuery.ts       ← Responsive breakpoint detection
+│       │   ├── useClickOutside.ts     ← Close dropdowns/modals
+│       │   └── useLocalStorage.ts     ← Persistent local state
+│       │
+│       ├── 📁 utils/
+│       │   ├── api.ts                 ← Axios instance + interceptors + retry
+│       │   ├── formatters.ts          ← Date, currency, phone formatting
+│       │   ├── validators.ts          ← Shared Zod schemas (import from server too)
+│       │   └── constants.ts           ← App-wide constants
+│       │
+│       └── 📁 types/
+│           ├── user.ts
+│           ├── api.ts                 ← ApiResponse<T>, PaginatedResponse<T>
+│           └── [resource].ts
+│
+├── 📁 server/
+│   ├── 📄 Dockerfile                  ← Multi-stage: build → slim runtime
+│   ├── 📄 package.json
+│   ├── 📄 tsconfig.json
+│   ├── 📄 .env.example
+│   └── 📁 src/
+│       ├── 📄 index.ts                ← Express app: middleware → routes → start
+│       │
+│       ├── 📁 config/
+│       │   ├── env.ts                 ← Validated env vars (Zod) — crash if missing
+│       │   ├── database.ts            ← TypeORM data source config
+│       │   ├── logger.ts              ← Pino setup (dev pretty, prod JSON, redaction)
+│       │   └── cors.ts                ← Allowed origins per environment
+│       │
+│       ├── 📁 middleware/
+│       │   ├── auth.middleware.ts      ← JWT verify + attach userId
+│       │   ├── admin.middleware.ts     ← Role check
+│       │   ├── error.middleware.ts     ← Centralized error → response
+│       │   ├── validate.middleware.ts  ← Generic Zod validation wrapper
+│       │   ├── rateLimiter.ts         ← Per-endpoint rate limiting
+│       │   └── requestId.ts           ← UUID correlation ID per request
+│       │
+│       ├── 📁 auth/
+│       │   ├── user.entity.ts         ← TypeORM User model
+│       │   ├── auth.service.ts        ← Register, login, refresh, logout
+│       │   ├── auth.routes.ts         ← /register /login /refresh /logout
+│       │   └── auth.schemas.ts        ← Zod: registerSchema, loginSchema
+│       │
+│       ├── 📁 [resource]/              ← One folder per resource/domain
+│       │   ├── [resource].entity.ts
+│       │   ├── [resource].service.ts
+│       │   ├── [resource].routes.ts
+│       │   └── [resource].schemas.ts
+│       │
+│       ├── 📁 shared/
+│       │   ├── base.entity.ts         ← id, createdAt, updatedAt (extend this)
+│       │   ├── pagination.ts          ← Cursor-based pagination helper
+│       │   └── response.ts            ← success(), error() response builders
+│       │
+│       └── 📁 db/
+│           ├── data-source.ts
+│           ├── 📁 migrations/
+│           └── 📁 seeds/
+│               └── seed.ts            ← Admin user + test data
+│
+└── 📁 tests/
+    ├── 📁 unit/
+    ├── 📁 api/
+    ├── 📁 e2e/
+    ├── 📁 fixtures/
+    └── playwright.config.ts
+```
+
+### What Goes in the REPO (Client Can See)
+| ✅ Include | Why |
+|-----------|-----|
+| README.md | Setup + feature docs |
+| .env.example | Shows what's needed without values |
+| docker-compose.yml | Easy setup |
+| All source code | That's what they're paying for |
+| Tests | Proof of quality |
+| CI/CD workflows | Automated pipeline |
+| CHANGELOG.md | Version tracking |
+| LICENSE | Legal |
+
+### What NEVER Goes in the REPO
+| ❌ Exclude (gitignore) | Why |
+|-----------------------|-----|
+| .env / .env.production | Real secrets |
+| node_modules/ | npm install handles it |
+| dist/ / build/ | Build artifacts |
+| .DS_Store / Thumbs.db | OS junk |
+| *.log | Runtime logs |
+| coverage/ | Test coverage reports |
+| secrets/ | Certificates, keys |
+| docs/internal/ | Internal architecture notes (if private) |
+
+### What to Show vs Hide from CLIENT
+
+| Show to Client | Hide from Client |
+|---------------|-----------------|
+| README.md (polished) | docs/architecture-decision.md |
+| Working demo | scripts/seed.ts (internal tooling) |
+| API documentation | Internal comments about workarounds |
+| Test results | Cost/pricing calculations |
+| Deployment guide (if they host) | Your master prompt 😏 |
+
+### Makefile (Developer Shortcuts)
+```makefile
+dev:          docker-compose up -d && npm run dev
+test:         npm run test:unit && npm run test:api && npm run test:e2e
+seed:         npx tsx scripts/seed.ts
+reset:        npx tsx scripts/reset-db.ts && npx tsx scripts/seed.ts
+build:        docker-compose -f docker-compose.prod.yml build
+deploy:       docker-compose -f docker-compose.prod.yml up -d
+logs:         docker-compose logs -f server
+lint:         npx eslint . --fix
+format:       npx prettier --write .
+clean:        rm -rf node_modules dist coverage .cache
+```
+
 ## PHASE 3: BUILD
 
 ## PROJECT DETAILS
