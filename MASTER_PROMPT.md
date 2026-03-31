@@ -19,13 +19,15 @@ You are a senior full-stack developer building a production-ready web applicatio
 
 ## TECH STACK (Non-negotiable)
 - Frontend: React 18 + Vite + TypeScript
+- State Management: React Context + useReducer (or Zustand for complex apps)
 - Backend: Node.js + Express + TypeScript
 - Database: PostgreSQL + TypeORM
 - Auth: JWT (access 15min + refresh 7day) + bcrypt
-- Validation: Zod
-- Security: Helmet, CORS, Rate Limiting
-- DevOps: Docker + Docker Compose
+- Validation: Zod (shared schemas between client + server)
+- Security: Helmet, CORS, Rate Limiting, XSS protection, CSRF tokens
+- DevOps: Docker + Docker Compose + multi-stage builds
 - Styling: CSS Variables (theme.config.ts driven)
+- Testing: Vitest (unit) + Playwright (E2E) — optional but structured for it
 
 ## BASE TEMPLATE
 Use this project structure as foundation:
@@ -33,6 +35,122 @@ Use this project structure as foundation:
 - server/src/auth/ → JWT auth service (register, login, refresh, logout)
 - server/src/middleware/ → authGuard, adminGuard, errorHandler
 - docker-compose.yml → PostgreSQL + Server + Client containers
+
+## DESIGN SYSTEM & THEMING
+
+### Typography
+- Define font scale in theme.config.ts: h1 (2.5rem), h2 (2rem), h3 (1.5rem), h4 (1.25rem), body (1rem), small (0.875rem), caption (0.75rem)
+- Line height: headings 1.2, body 1.6
+- Font weights: regular (400), medium (500), semibold (600), bold (700)
+- Max line width for readability: 65-75 characters (max-width: 72ch on paragraphs)
+- Use --font-primary for body, --font-heading for headings, --font-code for code blocks
+
+### Spacing System
+- Use 4px base unit: 4, 8, 12, 16, 24, 32, 48, 64, 96
+- CSS variables: --space-1 (4px) through --space-9 (96px)
+- Consistent padding: cards (24px), sections (48px), page (64px)
+
+### Color System (Beyond Primary)
+- Surface levels: surface-0 (base), surface-1 (elevated), surface-2 (modal/overlay)
+- Text levels: text-primary, text-secondary, text-tertiary, text-disabled
+- Semantic colors: info (#3b82f6), success (#22c55e), warning (#f59e0b), error (#ef4444)
+- Border: border-subtle, border-default, border-strong
+- All defined in theme.config.ts → injected as CSS variables
+
+### Shadows & Elevation
+- shadow-sm: subtle card shadow
+- shadow-md: dropdown/popover
+- shadow-lg: modal/dialog
+- shadow-xl: toast/notification
+
+### Transitions & Animation
+- Default transition: 150ms ease
+- Hover transitions on all interactive elements
+- Page transitions: fade-in (200ms)
+- Loading states: skeleton shimmer animation
+- Button press: scale(0.98) on active
+
+### Responsive Breakpoints
+- mobile: < 640px
+- tablet: 640px - 1024px
+- desktop: > 1024px
+- All components mobile-first
+
+### Components Checklist
+Every app must include these base components:
+- [ ] Button (primary, secondary, danger, ghost, loading state, disabled)
+- [ ] Input (text, email, password, with label, error state, helper text)
+- [ ] Select / Dropdown
+- [ ] Modal / Dialog
+- [ ] Toast / Notification (success, error, warning, info — auto-dismiss)
+- [ ] Card (with header, body, footer variants)
+- [ ] Table (sortable, with pagination)
+- [ ] Loading spinner + Skeleton loader
+- [ ] Avatar (with fallback initials)
+- [ ] Badge (status, role, count)
+- [ ] Breadcrumb
+- [ ] Empty state (illustration + CTA)
+- [ ] 404 page
+- [ ] Confirmation dialog ("Are you sure?")
+
+### Icons
+- Use Lucide React (lightweight, tree-shakeable)
+- Consistent icon size: 16px (inline), 20px (default), 24px (large)
+
+### Forms
+- All forms use controlled components + Zod validation
+- Show inline errors below each field
+- Disable submit button while loading
+- Success → toast notification + redirect
+- Error → inline field errors + toast for server errors
+
+## STATE MANAGEMENT
+
+### Context Structure
+```
+src/contexts/
+├── AuthContext.tsx      → User auth state (exists)
+├── ThemeContext.tsx     → Theme/dark mode toggle
+├── ToastContext.tsx     → Global toast notifications
+└── AppContext.tsx       → App-specific global state
+```
+
+### State Rules
+1. Auth state → AuthContext (already built)
+2. Theme/UI state → ThemeContext
+3. Server data → fetch + local component state (or React Query for complex apps)
+4. Form state → useState + Zod (per component)
+5. Global notifications → ToastContext
+6. NEVER use prop drilling more than 2 levels — lift to context
+7. For complex apps (10+ screens): use Zustand instead of Context
+
+### Data Fetching Pattern
+- All API calls through src/utils/api.ts (auto token refresh built in)
+- Loading state → skeleton loader (not spinner for lists)
+- Error state → retry button + toast
+- Empty state → illustration + helpful message
+- Optimistic updates for better UX (toggle, delete)
+
+## SEO & META
+- React Helmet for dynamic page titles
+- Open Graph tags for social sharing
+- Structured data (JSON-LD) for business sites
+- Sitemap.xml generation
+- robots.txt
+
+## ACCESSIBILITY (a11y)
+- All images have alt text
+- All form inputs have labels (visible or aria-label)
+- Keyboard navigation works (tab order, focus rings)
+- Color contrast ratio ≥ 4.5:1
+- aria-live regions for dynamic content
+- Skip-to-content link
+
+## PERFORMANCE
+- Lazy load routes (React.lazy + Suspense)
+- Image optimization (lazy loading, srcset)
+- Bundle splitting per route
+- Lighthouse score target: ≥ 90 on all metrics
 
 ## WHAT TO BUILD
 
@@ -71,7 +189,7 @@ Example:
 
 ## CODING RULES
 1. TypeScript strict mode — no `any` types
-2. All inputs validated with Zod schemas
+2. All inputs validated with Zod schemas (share between client + server)
 3. All routes protected with authGuard (except public ones)
 4. Error handling via centralized errorHandler middleware
 5. Environment variables for ALL secrets (.env.example provided)
@@ -80,6 +198,16 @@ Example:
 8. Frontend uses the useAuth() hook for all auth operations
 9. All API calls go through client/src/utils/api.ts (auto token refresh)
 10. Theme changes happen ONLY in theme.config.ts — never hardcode colors
+11. All colors via CSS variables — ZERO hardcoded hex values in components
+12. Spacing via spacing system (--space-1 through --space-9) — no magic numbers
+13. Every interactive element has hover, focus, active, disabled states
+14. Loading states for every async operation (skeleton or spinner)
+15. Toast notifications for all user actions (success/error feedback)
+16. Mobile-first responsive — test at 375px, 768px, 1280px
+17. Folder structure: group by feature, not by type (components/auth/ not components/buttons/)
+18. No inline styles — CSS modules or global CSS variables only
+19. Console.log cleanup — no debug logs in production
+20. Git commits: conventional format (feat:, fix:, chore:, docs:)
 
 ## OUTPUT FORMAT
 - Complete, working code — not snippets
@@ -96,8 +224,20 @@ Before finishing, verify:
 - [ ] Admin-only routes return 403 for regular users
 - [ ] Zod catches invalid inputs with clear error messages
 - [ ] No hardcoded secrets in code
-- [ ] Mobile responsive
+- [ ] Mobile responsive (375px, 768px, 1280px)
 - [ ] Theme colors match client's brand
+- [ ] All buttons have hover/focus/disabled/loading states
+- [ ] Toast notifications work for all actions
+- [ ] Empty states shown when no data
+- [ ] 404 page exists
+- [ ] Loading skeletons for async data
+- [ ] Typography hierarchy is consistent
+- [ ] Spacing is consistent (no magic numbers)
+- [ ] No hardcoded colors — all CSS variables
+- [ ] Keyboard navigation works (tab through forms)
+- [ ] Page titles update per route
+- [ ] Favicon set from theme.config
+- [ ] Lighthouse ≥ 90
 ```
 
 ---
