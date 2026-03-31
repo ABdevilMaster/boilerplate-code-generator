@@ -36,6 +36,115 @@ Use this project structure as foundation:
 - server/src/middleware/ → authGuard, adminGuard, errorHandler
 - docker-compose.yml → PostgreSQL + Server + Client containers
 
+## MODERN AUTH & SECURITY (2026 Standards)
+
+### Authentication Layers
+1. **Primary:** JWT (access 15min + refresh 7day + rotation on every refresh)
+2. **Optional upgrade:** Passkeys / WebAuthn (passwordless — modern standard)
+3. **Social login:** OAuth 2.1 with PKCE (Google, GitHub, Discord)
+4. **Session security:**
+   - HttpOnly + Secure + SameSite=Strict cookies for refresh tokens
+   - Fingerprint binding (tie token to device/browser fingerprint)
+   - Concurrent session limit (max 3 devices)
+   - Force logout from all devices option
+
+### Security Checklist (OWASP 2026)
+- [ ] HTTPS everywhere (HSTS header)
+- [ ] CSP (Content Security Policy) headers
+- [ ] Rate limiting: auth endpoints (5/min), API (100/15min), global (1000/15min)
+- [ ] Input sanitization — never trust client data
+- [ ] SQL injection prevention (TypeORM parameterized queries)
+- [ ] XSS prevention (React auto-escapes + DOMPurify for rich text)
+- [ ] CSRF tokens for state-changing requests
+- [ ] Brute force protection (account lockout after 5 failed attempts, exponential backoff)
+- [ ] Password rules: min 8 chars, breach database check (HaveIBeenPwned API)
+- [ ] Secrets rotation strategy documented
+- [ ] Audit log for sensitive actions (login, role change, delete)
+- [ ] API versioning (/api/v1/) from day one
+- [ ] Request signing for webhook endpoints
+- [ ] File upload: type validation, size limit, virus scan path, no direct execution
+
+## PERFORMANCE & SPEED (Sub-second Response)
+
+### Frontend Performance
+- Route-level code splitting (React.lazy + Suspense)
+- Image optimization: WebP/AVIF format, lazy loading, srcset responsive
+- Font loading: font-display: swap, preload critical fonts
+- Prefetch next routes on hover (React Router prefetch)
+- Service Worker for offline-first capability (PWA ready)
+- Bundle size budget: < 200KB initial JS (gzipped)
+- Core Web Vitals targets: LCP < 2.5s, FID < 100ms, CLS < 0.1
+
+### Backend Performance
+- Response time target: < 100ms for API calls
+- Database: connection pooling, query optimization, indexes on frequently queried fields
+- Redis caching layer for frequently accessed data (optional but structured for it)
+- Compression: gzip/brotli on all responses
+- Pagination: cursor-based (not offset) for large datasets
+- Streaming responses for large data (ndjson)
+
+### Infrastructure
+- Docker multi-stage builds (smallest possible images)
+- Health check endpoints (/api/health with db connectivity check)
+- Graceful shutdown handling (SIGTERM → drain connections → exit)
+- Structured logging (JSON format, correlation IDs per request)
+- Environment-based config (dev/staging/production)
+
+## MODERN UI & ANIMATIONS (2026 Standards)
+
+### Animation Library: Framer Motion
+- Use `framer-motion` for ALL animations (not CSS transitions for complex ones)
+- Tree-shakeable, React-native integration, gesture support
+
+### Required Animations
+1. **Page transitions:** Fade + slight slide (200ms ease-out)
+2. **Component mount:** Stagger children (list items appear one by one, 50ms delay each)
+3. **Hover effects:**
+   - Cards: subtle lift (translateY -2px) + shadow increase
+   - Buttons: scale(1.02) + color shift
+   - Links: underline slide-in from left
+4. **Loading states:**
+   - Skeleton shimmer (gradient animation, not spinner)
+   - Pulse animation on placeholder content
+   - Progress bar for file uploads / long operations
+5. **Micro-interactions:**
+   - Toggle switch: smooth slide with color transition
+   - Checkbox: bounce tick animation
+   - Form submit: button morphs to loading → success checkmark
+   - Delete: item slides out + height collapses smoothly
+   - Toast: slide in from top-right, auto-dismiss with progress bar
+   - Modal: backdrop fade + content scale from 0.95
+   - Dropdown: height auto-animate + fade
+6. **Scroll animations:**
+   - Scroll-triggered fade-in for sections (IntersectionObserver)
+   - Parallax on hero sections (subtle, < 20px offset)
+   - Progress indicator on scroll (top bar)
+7. **Error states:**
+   - Input shake animation on validation error
+   - Red pulse on error badge
+8. **Success states:**
+   - Confetti burst on major actions (optional, for gamified UIs)
+   - Green checkmark morph from loading spinner
+
+### Motion Principles
+- Duration: 150-300ms (micro), 300-500ms (page), never > 500ms
+- Easing: ease-out for enter, ease-in for exit, spring for interactive
+- Reduce motion: respect `prefers-reduced-motion` media query
+- No animation should block user interaction
+- 60fps minimum — use `will-change` and GPU-accelerated properties only (transform, opacity)
+
+### Modern UI Patterns (2026)
+- Glassmorphism: backdrop-filter blur for overlays/modals
+- Gradient accents: subtle gradient on primary buttons and hero sections
+- Dark mode as default (with light mode toggle)
+- Bento grid layouts for dashboards
+- Command palette (Cmd+K / Ctrl+K) for power users
+- Floating action button (mobile)
+- Infinite scroll with virtualization (react-window) for large lists
+- Drag and drop (dnd-kit) for sortable lists
+- Inline editing (click to edit, auto-save)
+- Skeleton → content transition (no layout shift)
+
 ## DESIGN SYSTEM & THEMING
 
 ### Typography
