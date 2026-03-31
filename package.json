@@ -1,0 +1,18 @@
+{
+  "name": "curious-falcon-starter",
+  "version": "1.0.0",
+  "description": "Production-ready React + Node.js + TypeScript starter with auth, JWT, Docker — by Curious Falcon 🦅",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "author": "Curious Falcon 🦅",
+  "license": "MIT"
+}
