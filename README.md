@@ -1,164 +1,120 @@
-# 🦅 Curious Falcon — Boilerplate & Prompt Pipeline
+# 🦅 Curious Falcon — App Builder
 
-> Production-ready **React + Node.js + TypeScript** starter + AI-powered app generation prompts.
-> Build full-stack apps in minutes, not days.
+> Production-ready boilerplate + Claude AI pipelines.
+> Go from idea to working app in 30 minutes.
 
 ---
 
-## 📁 What's Inside
+## What's Inside
 
 ```
-boilerplate-code-generator/
 ├── client/          → React + Vite + TypeScript frontend
 ├── server/          → Node.js + Express + TypeScript backend
-├── prompts/         → Claude app generation pipelines 🆕
-├── docker-compose.yml
-├── setup.sh
-└── MASTER_PROMPT.md
+├── prompts/         → Claude app generation pipelines
+└── docker-compose.yml
 ```
 
 ---
 
-## 🧠 Prompts — App Generation Pipelines
-
-Drop any of these in your project root as `CLAUDE.md` and Claude Code picks it up automatically.
-
-| File | Description |
-|------|-------------|
-| [`prompts/CLAUDE.md`](./prompts/CLAUDE.md) | Universal 6-phase pipeline — works for any app |
-| [`prompts/CLAUDE-INDIA.md`](./prompts/CLAUDE-INDIA.md) | 🇮🇳 India-first (Razorpay, OTP, Hindi, 2G optimized) |
-| [`prompts/CLAUDE-INTERNATIONAL.md`](./prompts/CLAUDE-INTERNATIONAL.md) | 🌍 Global (Stripe, GDPR, WCAG, i18n, Sentry) |
-| [`prompts/smart-app-builder.md`](./prompts/smart-app-builder.md) | Full interview → research → build pipeline |
-| [`prompts/universal-app-prompt.md`](./prompts/universal-app-prompt.md) | Simple fill-in-the-blanks template |
-| [`prompts/naturopathy-example.md`](./prompts/naturopathy-example.md) | Real-world example: clinic website |
-
-### ⚡ How to use
+## 🚀 Quick Start — Boilerplate
 
 ```bash
-# Option 1: Drop in project root
-cp prompts/CLAUDE-INDIA.md your-project/CLAUDE.md
-# Open Claude Code → say "start"
-
-# Option 2: Paste into Claude
-# Copy any prompt → paste → follow the phases
-```
-
-### Pipeline flow
-```
-Phase 1 → Intake (2 min)
-Phase 2 → Competitor Research (auto)
-Phase 3 → Customer Pain Points (auto)
-Phase 4 → Requirements Finalization (2 min)
-Phase 5 → BUILD (complete production code)
-Phase 6 → Production standards (auto-applied)
-          ↓
-    Working app: ~30 min
-    Production-ready: ~2-4 hours
-```
-
----
-
-## 🚀 Boilerplate — Quick Start
-
-### With Docker (recommended)
-```bash
-git clone https://github.com/ABdevilMaster/boilerplate-code-generator.git
-cd boilerplate-code-generator
+git clone https://github.com/ABdevilMaster/boilerplate-code-generator.git my-app
+cd my-app
+cp server/.env.example server/.env   # Fill in your values
 docker-compose up -d
 ```
-- App: http://localhost:5173
-- API: http://localhost:5000/api/health
 
-### Without Docker
+- **App:** http://localhost:5173
+- **API:** http://localhost:5000/api/health
+
+---
+
+## 🧠 Quick Start — Claude Pipelines
+
+Pick the right pipeline and drop it in your project:
+
+| Pipeline | Use when |
+|----------|---------|
+| [`prompts/CLAUDE.md`](./prompts/CLAUDE.md) | Any app — general purpose |
+| [`prompts/CLAUDE-INDIA.md`](./prompts/CLAUDE-INDIA.md) | 🇮🇳 India — UPI, OTP, Hindi, Android |
+| [`prompts/CLAUDE-INTERNATIONAL.md`](./prompts/CLAUDE-INTERNATIONAL.md) | 🌍 Global — Stripe, GDPR, WCAG |
+
 ```bash
-# Server
-cd server && cp .env.example .env && npm install && npm run dev
+# Copy to your project root
+cp prompts/CLAUDE-INDIA.md your-project/CLAUDE.md
 
-# Client (new terminal)
-cd client && npm install && npm run dev
+# Open Claude Code → say "start"
+# Answer 10 questions → app generates automatically
 ```
 
 ---
 
-## 🔧 What's Included
+## What the Pipelines Do
 
-### Backend (Node.js + Express + TypeScript)
-- ✅ JWT authentication (access + refresh tokens)
-- ✅ User registration, login, logout
-- ✅ Role-based access (user/admin)
-- ✅ TypeORM + PostgreSQL
-- ✅ Zod validation
-- ✅ Rate limiting + Helmet security
-- ✅ Centralized error handling middleware
-- ✅ Multi-stage Docker build
+```
+Phase 1 → Interview you (2 min)
+Phase 2 → Research top 5 competitors (auto)
+Phase 3 → Mine customer pain points (auto)
+Phase 4 → Finalize requirements (2 min)
+Phase 5 → BUILD — complete production code
+Phase 6 → Apply production standards (auto)
+```
 
-### Frontend (React + Vite + TypeScript)
-- ✅ Login & Register pages
-- ✅ Protected routes with auto token refresh
-- ✅ Admin dashboard layout
-- ✅ Global theme config (theme.config.ts)
-- ✅ Centralized API utility (utils/api.ts)
-
-### DevOps
-- ✅ Docker Compose (one command setup)
-- ✅ PostgreSQL container
-- ✅ .env.example with all variables documented
-- ✅ Health check endpoint
+Every generated app includes:
+- ✅ Playwright tests (UI + API + E2E)
+- ✅ Resend for email
+- ✅ Exact library versions (no ^ risks)
+- ✅ Library audit before build (CVEs, outdated packages)
+- ✅ Docker + .env.example + README
 
 ---
 
-## 📡 API Endpoints
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | /api/auth/register | ❌ | Register new user |
-| POST | /api/auth/login | ❌ | Login |
-| POST | /api/auth/refresh | ❌ | Refresh tokens |
-| POST | /api/auth/logout | ✅ | Logout |
-| GET | /api/users/me | ✅ | Current user profile |
-| GET | /api/users | ✅ Admin | List all users |
-| GET | /api/health | ❌ | Health check |
-
----
-
-## 🛠 Tech Stack
+## Boilerplate Stack
 
 | Layer | Tech |
 |-------|------|
 | Frontend | React 18 + Vite + TypeScript |
 | Backend | Node.js + Express + TypeScript |
-| Database | PostgreSQL 16 + TypeORM |
-| Auth | JWT (access + refresh) + bcrypt |
+| Database | PostgreSQL + TypeORM |
+| Auth | JWT (access + refresh tokens) + bcrypt |
 | Validation | Zod |
 | Security | Helmet + CORS + Rate Limiting |
 | DevOps | Docker + Docker Compose |
 
 ---
 
-## 🇮🇳 vs 🌍 Which Claude Pipeline?
+## API Endpoints
 
-| Use India pipeline | Use International pipeline |
-|-------------------|--------------------------|
-| Target: India | Target: US / EU / Global |
-| Payments: Razorpay + UPI | Payments: Stripe |
-| Auth: SMS OTP | Auth: Email + Google + GitHub |
-| Network: 2G/3G optimized | Network: LTE/WiFi |
-| Language: Hindi + English | Language: i18n ready |
-| Hosting: Hetzner / DigitalOcean | Hosting: Vercel + Railway |
-
----
-
-## 📚 Documentation
-
-| Doc | Description |
-|-----|-------------|
-| [`docs/GETTING-STARTED.md`](./docs/GETTING-STARTED.md) | Step-by-step setup with real examples |
-| [`docs/PIPELINE-GUIDE.md`](./docs/PIPELINE-GUIDE.md) | Detailed guide to all Claude pipelines |
-| [`docs/BOILERPLATE-STRUCTURE.md`](./docs/BOILERPLATE-STRUCTURE.md) | Every file explained with code examples |
-| [`prompts/README.md`](./prompts/README.md) | Prompts usage guide |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | /api/auth/register | ❌ | Register |
+| POST | /api/auth/login | ❌ | Login |
+| POST | /api/auth/refresh | ❌ | Refresh token |
+| POST | /api/auth/logout | ✅ | Logout |
+| GET | /api/users/me | ✅ | My profile |
+| GET | /api/health | ❌ | Health check |
 
 ---
 
-## 📄 License
+## Environment Variables
 
-MIT — Built by [Curious Falcon 🦅](https://github.com/ABdevilMaster)
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/myapp
+JWT_ACCESS_SECRET=your_random_32_char_secret
+JWT_REFRESH_SECRET=another_random_32_char_secret
+JWT_ACCESS_EXPIRY=15m
+JWT_REFRESH_EXPIRY=7d
+PORT=5000
+CLIENT_URL=http://localhost:5173
+
+# Email (get free API key at resend.com)
+RESEND_API_KEY=re_xxxxxxxxxxxx
+EMAIL_FROM=noreply@yourdomain.com
+```
+
+---
+
+## License
+
+MIT — [Curious Falcon 🦅](https://github.com/ABdevilMaster)
