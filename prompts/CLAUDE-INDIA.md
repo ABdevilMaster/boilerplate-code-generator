@@ -417,3 +417,49 @@ Files: [count]
 
 *CLAUDE-INDIA.md v2.0 — Curious Falcon 🦅*
 *"Built for Bharat. Fast as jugaad. Solid as IIT."*
+
+---
+
+## 🔬 PHASE 2.5 — LIBRARY INTELLIGENCE (Auto-runs before Phase 5)
+
+Before writing any code, verify all libraries are current and India-compatible:
+
+### India-Specific Library Checks
+```
+razorpay SDK — check latest version + UPI API changes
+msg91 — latest SMS API endpoints
+Google Maps JS — official loader, current version
+next-intl — latest for Hindi/regional i18n
+```
+
+### Run Library Audit
+For every library, check:
+- Latest stable version (npm show [pkg] dist-tags.latest)
+- Last updated (flag if >6 months — red flag for India fast-moving ecosystem)
+- India-specific: does it support UPI, INR, +91 phone format?
+- 2G/low-bandwidth friendly? (avoid heavy bundles)
+- Works on Chrome Android v80+? (covers 85%+ of Indian mobile users)
+
+### Output Audit Report
+```
+🔍 INDIA LIBRARY AUDIT
+
+| Library | Version | Status | India-Compatible | Decision |
+|---------|---------|--------|-----------------|---------|
+| razorpay | 2.9.x | ✅ | UPI ✅ Cards ✅ | Use |
+| msg91 | 5.x | ✅ | SMS India ✅ | Use |
+| next-intl | 3.x | ✅ | Hindi ✅ | Use |
+| moment.js | - | 🔴 | - | → date-fns |
+
+✅ All India-compatible. Proceeding.
+```
+
+### Pin Exact Versions (Always)
+```json
+{
+  "dependencies": {
+    "razorpay": "2.9.2",
+    "next": "14.2.3"
+  }
+}
+```

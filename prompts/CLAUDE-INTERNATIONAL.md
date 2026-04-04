@@ -486,3 +486,52 @@ Files: [count]
 
 *CLAUDE-INTERNATIONAL.md v2.0 — Curious Falcon 🦅*
 *"Built for the world. World-class quality. Ship and scale."*
+
+---
+
+## 🔬 PHASE 2.5 — LIBRARY INTELLIGENCE (Auto-runs before Phase 5)
+
+Before writing code, run global library audit with security + compliance focus:
+
+### Global Library Checks
+```
+stripe SDK — latest version + SCA/3DS compliance
+next-auth — v4 stable (v5 beta — skip)
+@sentry/nextjs — latest for sourcemaps
+posthog-js — privacy-friendly, GDPR-safe
+cookie-consent libraries — GDPR compliant
+```
+
+### Run Library Audit
+For every library:
+- Latest stable version
+- Last updated (<3 months = green)
+- Known CVEs → check snyk.io
+- GDPR-safe? (no unauthorized data collection)
+- Bundle size impact → use bundlephobia.com
+- TypeScript types included? (not @types/... separate package ideally)
+- Tree-shakable?
+
+### Output Audit Report
+```
+🔍 GLOBAL LIBRARY AUDIT
+
+| Library | Version | CVEs | Bundle | GDPR | Decision |
+|---------|---------|------|--------|------|---------|
+| stripe | 14.x | None | 120KB | ✅ | Use |
+| next-auth | 4.24.x | None | 45KB | ✅ | Use (skip v5 beta) |
+| @sentry/nextjs | 8.x | None | lazy | ✅ | Use |
+| passport.js | - | 2 open | - | ⚠️ | → jose + custom |
+
+⚠️ SWITCHES MADE:
+- passport.js → jose (unpatched CVEs, better maintained)
+
+✅ All libraries verified. GDPR-safe. Proceeding.
+```
+
+### Security Scan Before Build
+```bash
+# Always run before finalizing package.json
+npm audit
+# If vulnerabilities found → find alternatives before proceeding
+```

@@ -396,3 +396,58 @@ The user can say these at any time:
 
 *CLAUDE.md Pipeline v2.0 — Curious Falcon 🦅*
 *"From idea to production in hours, not weeks."*
+
+---
+
+## 🔬 PHASE 2.5 — LIBRARY INTELLIGENCE (Auto-runs before Phase 5)
+
+Before writing any code, run a **Library Audit**:
+
+### Step 1 — Research latest stable versions
+For every library in the chosen stack, verify:
+- Latest stable version (not beta/RC unless explicitly requested)
+- Last update date (flag if >6 months)
+- Weekly npm downloads trend (growing or declining?)
+- Any critical unpatched CVEs (check snyk.io or npm audit)
+- Breaking changes in recent major versions
+- Better alternatives that have emerged
+
+### Step 2 — Output Library Audit Report
+```
+🔍 LIBRARY AUDIT
+
+| Library | Version | Last Updated | Downloads/wk | Status | Decision |
+|---------|---------|-------------|-------------|--------|---------|
+| Next.js | 14.2.x | 2 weeks ago | 6.2M | ✅ Green | Use |
+| Prisma | 5.11.x | 1 week ago | 1.1M | ✅ Green | Use |
+| TypeORM | 0.3.20 | 4 months ago | 800K | ⚠️ Yellow | Switch to Prisma |
+| moment.js | - | Deprecated | - | 🔴 Red | Use date-fns instead |
+
+⚠️ SWITCHES MADE:
+- TypeORM → Prisma (better maintained, better DX)
+- moment.js → date-fns (tree-shakable, actively maintained)
+
+✅ All libraries verified and current. Proceeding with build.
+```
+
+### Step 3 — Pin exact versions in package.json
+```json
+{
+  "dependencies": {
+    "next": "14.2.3",
+    "prisma": "5.11.0"
+  }
+}
+```
+Never use `^` or `~` version prefixes in generated package.json — pin exact versions for reproducibility.
+
+### Library Selection Rules
+- ✅ GREEN: Updated <3 months, >10K downloads/wk, no critical CVEs
+- ⚠️ YELLOW: Updated 3-6 months, 1K-10K downloads, use with note
+- 🔴 RED: Updated >6 months, declining downloads, critical CVEs — switch to alternative
+
+### Always Check Before Using
+1. `npm show [package] time.modified` → last publish date
+2. `npm show [package] dist-tags.latest` → latest version
+3. GitHub repo → last commit, open issues, maintainer activity
+4. snyk.io/[package] → known vulnerabilities
