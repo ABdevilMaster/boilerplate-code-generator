@@ -379,3 +379,40 @@ railway up
 ---
 
 *Built by [Curious Falcon 🦅](https://github.com/ABdevilMaster)*
+
+---
+
+## STEP 9 — Run Tests
+
+All generated apps include Playwright for UI + API + E2E testing:
+
+```bash
+# Install browsers (first time only)
+npx playwright install
+
+# Run all tests
+npm test
+
+# Run only API tests
+npm run test:api
+
+# Run only E2E tests
+npm run test:e2e
+
+# Open interactive UI
+npm run test:ui
+
+# Generate tests by recording browser actions
+npm run test:codegen
+```
+
+**API test example (no extra tool needed):**
+```typescript
+// tests/api/products.spec.ts
+test('GET /api/products returns list', async ({ request }) => {
+  const res = await request.get('/api/products');
+  expect(res.status()).toBe(200);
+  const body = await res.json();
+  expect(body.data.products).toBeInstanceOf(Array);
+});
+```
