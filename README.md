@@ -148,6 +148,17 @@ cd client && npm install && npm run dev
 
 ---
 
+## 📚 Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [`docs/GETTING-STARTED.md`](./docs/GETTING-STARTED.md) | Step-by-step setup with real examples |
+| [`docs/PIPELINE-GUIDE.md`](./docs/PIPELINE-GUIDE.md) | Detailed guide to all Claude pipelines |
+| [`docs/BOILERPLATE-STRUCTURE.md`](./docs/BOILERPLATE-STRUCTURE.md) | Every file explained with code examples |
+| [`prompts/README.md`](./prompts/README.md) | Prompts usage guide |
+
+---
+
 ## 📄 License
 
 MIT — Built by [Curious Falcon 🦅](https://github.com/ABdevilMaster)
