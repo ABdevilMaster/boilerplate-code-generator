@@ -44,10 +44,31 @@ You MUST start here. Before writing a single line of code or making any architec
 | SaaS / multi-tenant | Pricing tiers, tenant isolation, billing integration, admin panel |
 
 **Step 3 — Fill in the gaps.** Before wrapping up, make sure you know enough to decide:
+- **Project phase** — where is this right now? (see phase table below)
 - Priorities (ship fast vs pixel-perfect vs performance-critical vs security-first)
 - Any strong tech preferences or constraints ("must use Next.js", "no Docker", "Vercel only")
 - Brand vibe (colors, mood, reference sites — or "you decide")
 - Scale expectations (hobby project vs production vs enterprise)
+
+### Project Phase Detection
+
+Always determine the project phase — it directly drives tech choices. Ask directly if unclear:
+> "Where is this project right now — brand new idea, MVP you want to validate, or something already in production that needs work?"
+
+| Phase | Signals | Tech Philosophy |
+|-------|---------|----------------|
+| 🌱 **Proof of Concept** | "just testing an idea", "want to see if it works", solo developer | Simplest possible stack. No DB if avoidable. Ship in hours, not days. |
+| 🚀 **MVP** | "need to validate with real users", "launching soon", small team | Lean but solid. Choose boring, proven tech. Avoid anything you'll regret at scale. |
+| 📈 **Growth** | "we have users but things are slow/breaking", "adding a team" | Refactor for scale. Add proper auth, caching, queues. Don't over-engineer. |
+| 🏗️ **Production** | "live app", "paying customers", "needs to be reliable" | Stability > novelty. Battle-tested libs. Observability, error tracking, rollback strategy. |
+| 🏢 **Enterprise** | "compliance requirements", "large team", "multi-region" | Strict separation, audit logs, SSO/SAML, infra-as-code, SLAs. |
+
+**Phase drives decisions like:**
+- PoC → SQLite over PostgreSQL, no Docker, no tests, deploy to free tier
+- MVP → PostgreSQL but no replication, Docker optional, basic tests only
+- Growth → Add Redis, job queues, connection pooling, monitoring
+- Production → Full Docker, CI/CD, staging env, Sentry, rate limiting
+- Enterprise → Kubernetes, SOC2 considerations, RBAC, audit trail
 
 ### Interview rules:
 
@@ -80,12 +101,14 @@ Client Priority Analysis:
 - SEO: [1-5] → [reason]
 
 Based on above, decide and state:
+- **Project Phase:** [PoC / MVP / Growth / Production / Enterprise] → [why]
 - Rendering strategy: [SSG / SSR / CSR / ISR]
 - State management: [Context / Zustand / Redux / none]
 - Database: [PostgreSQL / MongoDB / SQLite / localStorage / none]
 - Auth: [JWT / OAuth / session / none]
 - Deployment target: [Docker / Vercel / Netlify / bare Node]
 - File structure: [flat / feature-grouped / domain-driven]
+- **Phase-justified tradeoffs:** explicitly call out what you're skipping *because of phase* (e.g., "No Redis — MVP phase, premature optimization") and what you're adding (e.g., "Adding Sentry — Production phase, needs observability")
 
 ---
 
@@ -188,17 +211,17 @@ Before finishing, verify:
 
 ---
 
-## QUICK REFERENCE — COMMON STACKS
+## QUICK REFERENCE — PHASE-AWARE STACKS
 
-| App Type | Typical Stack | Notes |
-|----------|--------------|-------|
-| Landing / Portfolio | Next.js + Tailwind, no DB | SSG, deploy to Vercel |
-| SaaS Dashboard | Next.js + PostgreSQL + Auth | SSR, Docker |
-| E-commerce | Next.js + PostgreSQL + Stripe | ISR, heavy on API routes |
-| Mobile App | React Native + Expo | Or suggest Flutter if appropriate |
-| API Only | Express + PostgreSQL | Docker, no frontend |
-| Blog / Content | Next.js + MDX or CMS | SSG/ISR, SEO-focused |
-| Internal Tool | React + Vite + SQLite | CSR, simple deploy |
+| App Type | PoC / MVP | Growth / Production | Enterprise |
+|----------|-----------|--------------------|-----------| 
+| Landing / Portfolio | Next.js + Tailwind, Vercel free | Add CMS (Sanity/Contentful), CDN | Multi-region, analytics, A/B testing |
+| SaaS Dashboard | Next.js + SQLite + JWT | PostgreSQL + Redis + Docker | K8s, SSO/SAML, audit logs, multi-tenant |
+| E-commerce | Next.js + Stripe (no inventory) | Add PostgreSQL, inventory, order mgmt | ERP integration, tax engine, fraud detection |
+| Mobile App | Expo (managed workflow) | Bare workflow + custom native modules | MDM, enterprise distribution, offline sync |
+| API Only | Express + SQLite, no auth | PostgreSQL + Docker + rate limiting | API gateway, versioning, SLAs |
+| Blog / Content | Next.js + MDX | Add CMS + ISR + CDN | Multi-author, approval workflows, localization |
+| Internal Tool | React + Vite + localStorage | Add DB + auth + role management | SSO, audit trail, compliance |
 
 ---
 
