@@ -27,18 +27,55 @@ You know:
 
 Say: *"Ready to build for a global audience. Answer fast."*
 
-**Batch 1:**
+**Step 1 — Open with the essentials:**
 - App name?
 - One sentence: problem + market opportunity?
 - Primary market: US / EU / Global / specific region?
-- Target users: demographics, profession, income?
+- Where is this project right now — new idea, MVP to validate, or already live?
 
-**Batch 2:**
+**Step 2 — Adaptive follow-ups based on answers:**
+
+| If they mention... | Follow up about... |
+|---|---|
+| EU market | GDPR compliance, data residency, cookie consent |
+| SaaS / subscription | Pricing tiers, Stripe billing, churn prevention |
+| Healthcare | HIPAA compliance, BAA agreements, audit logging |
+| Enterprise / B2B | SSO/SAML, Okta, multi-tenant, procurement process |
+| Marketplace | Stripe Connect, seller onboarding, escrow |
+| API product | Rate limiting, versioning, developer docs, SDKs |
+| Mobile app | iOS/Android/both, App Store compliance, push notifications |
+
+**Step 3 — Fill remaining gaps:**
 - Top 3 must-have features?
 - Platform: web / iOS / Android / all?
 - Monetization: freemium / SaaS ($) / one-time / marketplace?
 - Compliance: GDPR / HIPAA / SOC2 / none?
 - Expected scale: MVP (<1K) / Growth (1K-100K) / Scale (100K+)?
+
+**Interview rules:**
+1. Ask 1-3 questions per exchange — never dump all at once
+2. Acknowledge each answer before the next question
+3. Infer what's obvious (EU app → always assume GDPR; healthcare → always HIPAA)
+4. Complete in 5-8 exchanges max
+
+### Project Phase Detection (Global context)
+
+**Always determine the project phase — it drives compliance and stack decisions:**
+
+| Phase | Signals | Global Tech Philosophy |
+|-------|---------|----------------------|
+| 🌱 **PoC** | "testing idea", solo founder, pre-funding | Vercel free + SQLite. Zero infra cost. Validate first. |
+| 🚀 **MVP** | "launching", "first paying customers", seed stage | Stripe + NextAuth + Railway/Render. GDPR basics only. |
+| 📈 **Growth** | "1K+ users", "Series A prep", "hiring devs" | Add Redis, queues, PostHog, Sentry. GDPR fully done. |
+| 🏗️ **Production** | "enterprise deals", "SLAs", "uptime matters" | Full Docker, CI/CD, staging, SOC2 readiness begins |
+| 🏢 **Enterprise** | "Fortune 500 prospects", "compliance required" | SOC2 certified, SSO/SAML, HIPAA if needed, SLAs |
+
+**Phase drives global-specific decisions:**
+- PoC → No Stripe (use payment link), basic auth only, skip analytics
+- MVP → Stripe + NextAuth + PostHog, GDPR cookie consent, privacy policy
+- Growth → Add Redis, job queues, Sentry, CDN, load testing
+- Production → Full SOC2 prep, pen testing, disaster recovery, staging parity
+- Enterprise → SSO/SAML (Okta/Auth0), HIPAA BAA if healthcare, dedicated infra
 
 ---
 
@@ -126,7 +163,25 @@ Say: *"Building for the world. World-class quality. No shortcuts."*
 Pin exact versions. No ^ or ~.
 ```
 
-#### STEP 5.2 — GLOBAL DEFAULT STACK
+#### STEP 5.2 — PHASE-ADAPTIVE GLOBAL STACK
+
+State the project phase first, then pick the right stack:
+
+| Layer | PoC / MVP | Growth / Production | Enterprise |
+|-------|-----------|--------------------|-----------| 
+| Frontend | Next.js + Tailwind | + shadcn/ui, PostHog, Sentry | + Feature flags, A/B, i18n |
+| Auth | NextAuth basic | + Social login, MFA | + SSO/SAML (Okta/Auth0) |
+| Payments | Stripe payment link | Stripe subscriptions + webhooks | + Stripe Connect, tax engine |
+| Database | SQLite or PostgreSQL | PostgreSQL + Redis | + Read replica, global CDN DB |
+| Compliance | Privacy policy only | GDPR full + CCPA | + SOC2, HIPAA if healthcare |
+| DevOps | Vercel free | Docker + CI/CD + staging | + K8s, multi-region, IaC |
+| Monitoring | None | Sentry + PostHog + health | + APM, alerting, SLA dashboards |
+
+**Always justify phase tradeoffs explicitly:**
+- What you're skipping: "No PostHog — PoC phase, analytics is premature"  
+- What you're adding: "Adding Sentry — Production phase, need error visibility before enterprise deals"
+
+**Default global stack (Production baseline):**
 
 | Layer | Default |
 |-------|---------|

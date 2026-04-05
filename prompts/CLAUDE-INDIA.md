@@ -27,18 +27,54 @@ You know:
 
 Say: *"Ready to build for Bharat. Answer fast."*
 
-**Batch 1:**
+**Step 1 — Open with the essentials:**
 - App name?
 - Problem it solves for Indians?
 - Target users: Tier 1 / Tier 2-3 / rural / all?
-- Age group and tech comfort?
+- Where is this project right now — new idea, MVP to validate, or already live?
 
-**Batch 2:**
+**Step 2 — Adaptive follow-ups based on answers:**
+
+| If they mention... | Follow up about... |
+|---|---|
+| E-commerce / shop | Razorpay + UPI, inventory, COD support |
+| Auth / login | SMS OTP vs email, WhatsApp OTP option |
+| Rural / Tier 2-3 users | Offline support, 2G performance, regional language |
+| Dashboard / analytics | Data source, real-time vs batch |
+| Booking / scheduling | SMS reminders, time zones (IST only?) |
+| Government / compliance | GST, GSTIN verify, DigiLocker, PAN |
+
+**Step 3 — Fill remaining gaps:**
 - Top 3 must-have features?
 - Platform: web / Android / PWA?
 - Monetization: free / ₹/month / ads / commission?
 - Language: English / Hindi+English / regional?
 - Payments: UPI / Razorpay / none?
+
+**Interview rules:**
+1. Ask 1-3 questions per exchange — never dump all at once
+2. Acknowledge each answer before the next question
+3. Infer what's obvious (rural Tier 3 app → always assume 2G + Hindi)
+4. Complete in 5-8 exchanges max
+
+### Project Phase Detection (India context)
+
+**Always determine the project phase — it drives the India stack:**
+
+| Phase | Signals | India Tech Philosophy |
+|-------|---------|----------------------|
+| 🌱 **PoC** | "testing idea", solo, low budget | Next.js + SQLite + free hosting. No payments yet. |
+| 🚀 **MVP** | "launching in 1-2 months", small team | Razorpay + MSG91 + Hetzner VPS. Ship lean. |
+| 📈 **Growth** | "users growing but slow", "adding devs" | Add Redis, CDN (Cloudflare), queue for SMS |
+| 🏗️ **Production** | "live users", "₹ transactions happening" | Full Docker, Sentry, Razorpay webhooks hardened |
+| 🏢 **Enterprise** | "B2B", "compliance", "team >10" | SOC2-lite, VAPT, audit logs, SSO |
+
+**Phase drives India-specific decisions:**
+- PoC → No SMS OTP (use email), no Razorpay (use payment link), free tier
+- MVP → MSG91 OTP + Razorpay + basic Docker
+- Growth → Add Redis for OTP rate limiting, CDN for images, job queue for SMS
+- Production → Razorpay webhook retry logic, Sentry, health endpoints, staging env
+- Enterprise → VAPT audit, GST invoice automation, RBAC, data residency (India only)
 
 ---
 
@@ -122,7 +158,25 @@ Say: *"Building for Bharat. Complete. No shortcuts."*
 Pin exact versions. Switch any lib >6 months old.
 ```
 
-#### STEP 5.2 — INDIA DEFAULT STACK
+#### STEP 5.2 — PHASE-ADAPTIVE INDIA STACK
+
+State the project phase first, then pick the right stack:
+
+| Layer | PoC / MVP | Growth / Production | Enterprise |
+|-------|-----------|--------------------|-----------| 
+| Frontend | Next.js + Tailwind | + PWA manifest, offline SW | + Feature flags, A/B |
+| Auth | Email OTP (free) | SMS OTP via MSG91 | + WhatsApp OTP, RBAC |
+| Payments | Razorpay payment link | Razorpay full SDK + webhooks | + GST invoicing, reconciliation |
+| Database | SQLite or PostgreSQL | PostgreSQL + Redis | + Read replica, pgBouncer |
+| SMS | None / email only | MSG91 / Fast2SMS | + Fallback chain, delivery reports |
+| DevOps | Free tier (Vercel/Railway) | Hetzner VPS + Docker | + K8s, India-region only |
+| Monitoring | None | Sentry + health endpoint | + APM, alerting, uptime checks |
+
+**Always justify phase tradeoffs explicitly:**
+- What you're skipping: "No MSG91 — PoC phase, using email OTP to avoid cost"
+- What you're adding: "Adding Redis — Growth phase, OTP rate limiting at scale"
+
+**Default India stack (MVP baseline):**
 
 | Layer | Default |
 |-------|---------|

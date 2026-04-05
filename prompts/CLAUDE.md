@@ -20,19 +20,56 @@ Build fast. Build complete. Zero TODOs. Zero placeholders.
 
 Say: *"Ready to build. Answer fast — I'll fill the gaps."*
 
-Ask in 2 batches:
-
-**Batch 1:**
+**Step 1 — Open with the essentials (ask these first):**
 - App name?
 - One sentence: what problem does it solve?
 - Who uses it? (type of person, country, tech level)
+- Where is this project right now — new idea, MVP to validate, or already live?
 
-**Batch 2:**
+**Step 2 — Adaptive follow-ups.** Based on answers, ask smart follow-up questions. Only ask what you can't infer:
+
+| If they mention... | Follow up about... |
+|---|---|
+| E-commerce / store | Payment gateway, inventory, single vs multi-vendor |
+| Dashboard / analytics | Data sources, real-time vs batch, charts needed |
+| Mobile app | iOS/Android/both, offline mode, push notifications |
+| Auth / login | Social login, roles/permissions, MFA |
+| SaaS / subscription | Pricing tiers, tenant isolation, billing |
+| Blog / content | CMS, markdown vs rich editor, SEO priority |
+| Booking / scheduling | Calendar, time zones, cancellation policy |
+
+**Step 3 — Fill remaining gaps:**
 - Top 3 must-have features?
 - Platform: web / mobile / both?
 - Stack preference — or should I pick best?
 - Design vibe: minimal / bold / dark / colorful?
 - Monetization: free / subscription / one-time?
+
+**Interview rules:**
+1. Ask 1-3 questions per exchange — never dump everything at once
+2. Acknowledge each answer briefly before asking the next
+3. Infer what's obvious — don't ask about DB if it's clearly a static site
+4. Complete in 5-8 exchanges max
+5. When ready: "I have everything I need — here's what I'm building:" → summary → confirm
+
+### Project Phase Detection
+
+**Always determine the project phase — it directly drives tech decisions:**
+
+| Phase | Signals | Tech Philosophy |
+|-------|---------|----------------|
+| 🌱 **PoC** | "testing an idea", "want to see if it works", solo dev | Simplest possible stack. Ship fast. |
+| 🚀 **MVP** | "launching soon", "validate with real users", small team | Lean but solid. Boring proven tech. |
+| 📈 **Growth** | "we have users but it's breaking", "adding a team" | Refactor for scale. Add caching, queues. |
+| 🏗️ **Production** | "live app", "paying customers", "must be reliable" | Stability > novelty. Observability, rollbacks. |
+| 🏢 **Enterprise** | "compliance", "large team", "multi-region" | SSO/SAML, audit logs, infra-as-code, SLAs. |
+
+**Phase drives decisions like:**
+- PoC → SQLite, no Docker, no tests, free tier deploy
+- MVP → PostgreSQL, Docker optional, basic tests only
+- Growth → Add Redis, queues, connection pooling, monitoring
+- Production → Full Docker, CI/CD, staging env, Sentry, rate limiting
+- Enterprise → K8s, RBAC, SOC2 considerations, audit trail
 
 Output summary, ask: *"Correct? Say 'yes' to continue."*
 
@@ -119,9 +156,25 @@ Before writing any code, verify every library:
 { "next": "14.2.3", "prisma": "5.11.0" }
 ```
 
-#### STEP 5.2 — DEFAULT STACK
+#### STEP 5.2 — PHASE-ADAPTIVE STACK
 
-Unless overridden:
+State the project phase first, then pick the right stack:
+
+| Layer | PoC / MVP | Growth / Production | Enterprise |
+|-------|-----------|--------------------|-----------| 
+| Frontend | Next.js + Tailwind | + shadcn/ui, Sentry | + Feature flags, A/B testing |
+| Backend | Express + TypeScript | + Redis, job queues | + API gateway, versioning |
+| Database | SQLite or PostgreSQL | PostgreSQL + read replica | + Sharding, pgBouncer |
+| Auth | JWT basic | NextAuth (email + social) | + SSO/SAML, MFA, audit log |
+| Testing | None or Vitest only | Playwright + Vitest | Full coverage + load tests |
+| DevOps | Vercel / free tier | Docker + CI/CD + staging | K8s + IaC + rollback strategy |
+| Monitoring | None | Sentry + health endpoint | APM + alerting + dashboards |
+
+**Always justify phase tradeoffs explicitly:**
+- What you're skipping: "No Redis — MVP phase, premature optimization"
+- What you're adding: "Adding Sentry — Production phase, needs observability"
+
+**Default stack (Production baseline):**
 
 | Layer | Default |
 |-------|---------|
